@@ -42,26 +42,34 @@ exports.requestHandler = function(request, response) {
   var headers = defaultCorsHeaders;
   // Tell the client we are sending them JSON
   headers['Content-Type'] = "application/JSON";
-
-  // Handle POST
-  if(method === "POST"){
-    messages.push(parsePost(request)); // store the message
-    console.log(messages);
-    statusCode = 201;
-    response.writeHead(statusCode, headers);
-    response.end(); // end the response
-  }
-  // Handle GET
-  if(method === "GET"){
-    // figure out what they want
-    // send it to them
-    statusCode = 200;
-    response.writeHead(statusCode, headers);
-    response.end(JSON.stringify({results: messages})); // send back all the messages in a strinfigied object
-  }
-  // Handle OPTIONS
-  if(method === "OPTIONS"){
-    statusCode = 200;
+  // Check url
+  console.log("URL is ", url);
+  if(url.substring(0,8) === "/classes" || url === "/classes/chatterbox"){
+    // Handle POST
+    if(method === "POST"){
+      parsePost(request); // store the message
+      statusCode = 201;
+      response.writeHead(statusCode, headers);
+      response.end(); // end the response
+    }
+    // Handle GET
+    if(method === "GET"){
+      console.log(messages);
+      // figure out what they want
+      // send it to them
+      statusCode = 200;
+      response.writeHead(statusCode, headers);
+      response.end(JSON.stringify({results: messages})); // send back all the messages in a strinfigied object
+    }
+    // Handle OPTIONS
+    if(method === "OPTIONS"){
+      statusCode = 200;
+      response.writeHead(statusCode, headers);
+      response.end();
+    }
+  } else {
+    console.log("Bad URL request");
+    statusCode = 404;
     response.writeHead(statusCode, headers);
     response.end();
   }
@@ -82,6 +90,8 @@ var parsePost = function(req){
   req.on('end', function(){
     try{
       parsed = JSON.parse(body)
+      messages.push(parsed);
+      console.log(messages);
       console.log("RETURNING", parsed);
     } catch (err){
       // do some error stuff

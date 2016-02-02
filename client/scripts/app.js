@@ -9,7 +9,7 @@ $(document).ready(function(){
 
   app.init = function(){
     app.fetch();
-    // setInterval(app.fetch, 3000);
+    setInterval(app.fetch, 3000);
   };
 
   app.send = function(message){
@@ -47,10 +47,12 @@ $(document).ready(function(){
     $.ajax({
       url: app.server,
       type: 'GET',
+      contentType: 'application/JSON',
       // data: {order:'-createdAt'},
       success: function(response){
+        response = JSON.parse(response);
         app.clearMessages();
-        if(!response.results){
+        if(response.results.length === 0){
           return;
         }
         for (var i = 0; i < response.results.length; i++) {
@@ -69,7 +71,7 @@ $(document).ready(function(){
         };
       },
       error: function(){
-        console.log('There was an error');
+        console.log('There was an error', data);
       }
     })
   }
