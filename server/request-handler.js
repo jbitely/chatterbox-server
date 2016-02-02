@@ -28,25 +28,48 @@ exports.requestHandler = function(request, response) {
   // debugging help, but you should always be careful about leaving stray
   // console.logs in your code.
   console.log("Serving request type " + request.method + " for url " + request.url);
-  console.log(request);
-  console.log("Path :" + request.path);
-  // The outgoing status.
-  var statusCode = 200;
+  // console.log("request is: ");
+  // console.log(request);
 
-  // Some data
-  var data = JSON.stringify({"results" : []})
-  // Handle POST
-  if(request.method === "POST"){
+  // store some stuff
+  var method = request.method;
+  var url = request.url;
+  // The outgoing status.
+  var statusCode = 200; // default to 200? probably not
+
+  // Handle and store data from POST
+  var data = {
+    "results" : []
+  }
+
+  if(method === "POST"){
+    var content = {};
+    content = parsePost(request);
+    data.results.push(content);
     statusCode = 201;
   }
+  // var body = '';
+
+  // request.on('data', function(chunk){
+  //   body += chunk;
+  // });
+
+  // request.on('end', function(){
+  //   try {
+  //     jsonTest = JSON.parse(body);
+  //     data.results.push(jsonTest);
+  //     statusCode = 201;
+  //   } catch (error) {
+  //     // bad JSON
+  //     response.statusCode = 400;
+  //     return response.end('error: ${error.message}')
+  //   }
+  // })
 
   // See the note below about CORS headers.
   var headers = defaultCorsHeaders;
 
-  // Tell the client we are sending them plain text.
-  //
-  // You will need to change this if you are sending something
-  // other than plain text, like JSON or HTML.
+  // Tell the client we are sending them JSON
   headers['Content-Type'] = "application/JSON";
 
   // .writeHead() writes to the request line and headers of the response,
@@ -60,7 +83,7 @@ exports.requestHandler = function(request, response) {
   //
   // Calling .end "flushes" the response's internal buffer, forcing
   // node to actually send all the data over to the client.
-  response.end(data);
+  response.end(JSON.stringify(data)); // Make our return data JSON parsable string then send it off
 };
 
 // These headers will allow Cross-Origin Resource Sharing (CORS).
@@ -77,4 +100,22 @@ var defaultCorsHeaders = {
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, accept",
   "access-control-max-age": 10 // Seconds.
+};
+
+var parsePost = function(req){
+  console.log("CALLED parsePost");
+  var body = '';
+  var parsed = {};
+  req.setEncoding('utf8');
+
+  req.on('data', function(chunk){
+    body += chunk;
+  });
+
+  req.on('end', function(){
+    parsed = JSON.parse(body)
+    console.log("RETURNING", parsed);
+  });
+
+  return parsed;
 };
