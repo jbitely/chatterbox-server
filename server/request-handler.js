@@ -36,25 +36,32 @@ exports.requestHandler = function(request, response) {
   var url = request.url;
   var statusCode = null;
 
-  // Check url
-  if(url.substring(0,8) === "/classes" || url === "/classes/chatterbox"){
-    // Handle POST
-    if(method === "POST"){
+  var actions = {
+    "POST" : function(request, response){
       getData(request, function(message){
         console.log(message);
         messages.push(message);
         console.log("Messages ", messages);
         sendResponse(response, null, 201)
       });
-    }
-    // Handle GET
-    if(method === "GET"){
+    },
+    "GET" : function(request, respone){
       console.log(messages);
       sendResponse(response, {results: messages}, 200);
-    }
-    // Handle OPTIONS
-    if(method === "OPTIONS"){
+    },
+    "OPTIONS" : function(request, response){
       sendResponse(response, null, 200);
+    }
+  }
+
+  // Check url
+  if(url.substring(0,8) === "/classes" || url === "/classes/chatterbox"){
+    // Handle POST
+    var action = actions[method];
+    if (action){
+      action(request, response)
+    } else{
+      // ERROR Handling
     }
   } else {
     console.log("Bad URL request");
