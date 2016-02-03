@@ -1,36 +1,33 @@
-/*************************************************************
-
-You should implement your request handler function in this file.
-
-requestHandler is already getting passed to http.createServer()
-in basic-server.js, but it won't work as is.
-
-You'll have to figure out a way to export this function from
-this file and include it in basic-server.js so that it actually works.
-
-*Hint* Check out the node module documentation at http://nodejs.org/api/modules.html.
-
-**************************************************************/
 var messages = []; // message storage
 
-// These headers will allow Cross-Origin Resource Sharing (CORS).
-// This code allows this server to talk to websites that
-// are on different domains, for instance, your chat client.
-//
-// Your chat client is running from a url like file://your/chat/client/index.html,
-// which is considered a different domain.
-//
-// Another way to get around this restriction is to serve you chat
-// client from this domain by setting up static file serving.
-
-var defaultCorsHeaders = {
+var headers = {
   "access-control-allow-origin": "*",
   "access-control-allow-methods": "GET, POST, PUT, DELETE, OPTIONS",
   "access-control-allow-headers": "content-type, accept",
-  "access-control-max-age": 10 // Seconds.
+  "access-control-max-age": 10, // Seconds.
+  "Content-type": "application/JSON"
+};
+
+var sendResponse = function(response, data, statusCode){
+  statusCode = statusCode || 200; // default status to 200
+  response.writeHead(statusCode, headers); // set headers
+  response.end(JSON.stringify(data)); // send back JSON stringified data
+}
+
+// load data chunks and return callback with JSON parsed data
+var getData = function(request, callback){
+  var data = "";
+  request.on('data', function(chunk){
+    data += chunk;
+  });
+
+  request.on('end', function(){
+    callback(JSON.parse(data));
+  });
 };
 
 exports.requestHandler = function(request, response) {
+  console.log("REQUEST HANDLER CALLED");
   // Do some basic logging.
   console.log("Serving request type " + request.method + " for url " + request.url);
 
@@ -38,64 +35,31 @@ exports.requestHandler = function(request, response) {
   var method = request.method;
   var url = request.url;
   var statusCode = null;
-  // See the note below about CORS headers.
-  var headers = defaultCorsHeaders;
-  // Tell the client we are sending them JSON
-  headers['Content-Type'] = "application/JSON";
+
   // Check url
-  console.log("URL is ", url);
   if(url.substring(0,8) === "/classes" || url === "/classes/chatterbox"){
     // Handle POST
     if(method === "POST"){
-      parsePost(request); // store the message
-      statusCode = 201;
-      response.writeHead(statusCode, headers);
-      response.end(); // end the response
+      getData(request, function(message){
+        console.log(message);
+        messages.push(message);
+        console.log("Messages ", messages);
+        sendResponse(response, null, 201)
+      });
     }
     // Handle GET
     if(method === "GET"){
       console.log(messages);
-      // figure out what they want
-      // send it to them
-      statusCode = 200;
-      response.writeHead(statusCode, headers);
-      response.end(JSON.stringify({results: messages})); // send back all the messages in a strinfigied object
+      sendResponse(response, {results: messages}, 200);
     }
     // Handle OPTIONS
     if(method === "OPTIONS"){
-      statusCode = 200;
-      response.writeHead(statusCode, headers);
-      response.end();
+      sendResponse(response, null, 200);
     }
   } else {
     console.log("Bad URL request");
-    statusCode = 404;
-    response.writeHead(statusCode, headers);
-    response.end();
+    sendResponse(response, "Not found.", 404);
   }
 };
 
 
-
-var parsePost = function(req){
-  console.log("CALLED parsePost");
-  var body = '';
-  var parsed = {};
-  req.setEncoding('utf8');
-
-  req.on('data', function(chunk){
-    body += chunk;
-  });
-
-  req.on('end', function(){
-    try{
-      parsed = JSON.parse(body)
-      messages.push(parsed);
-      console.log(messages);
-      console.log("RETURNING", parsed);
-    } catch (err){
-      // do some error stuff
-    }
-  });
-  return parsed;
-};
