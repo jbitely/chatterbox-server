@@ -1,3 +1,4 @@
+var objectId = 0;
 var messages = []; // message storage
 
 var headers = {
@@ -27,7 +28,6 @@ var getData = function(request, callback){
 };
 
 exports.requestHandler = function(request, response) {
-  console.log("REQUEST HANDLER CALLED");
   // Do some basic logging.
   console.log("Serving request type " + request.method + " for url " + request.url);
 
@@ -39,14 +39,12 @@ exports.requestHandler = function(request, response) {
   var actions = {
     "POST" : function(request, response){
       getData(request, function(message){
-        console.log(message);
         messages.push(message);
-        console.log("Messages ", messages);
+        message.objectId = ++objectId;
         sendResponse(response, null, 201)
       });
     },
     "GET" : function(request, respone){
-      console.log(messages);
       sendResponse(response, {results: messages}, 200);
     },
     "OPTIONS" : function(request, response){
