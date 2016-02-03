@@ -54,12 +54,12 @@ exports.requestHandler = function(request, response) {
 
   // Check url
   if(url.substring(0,8) === "/classes" || url === "/classes/chatterbox"){
-    // Handle POST
+    // Handle valid actions
     var action = actions[method];
     if (action){
       action(request, response)
     } else{
-      // ERROR Handling
+      // TODO: error handling
     }
   } else {
     console.log("Bad URL request");
